@@ -29,8 +29,8 @@ try {
     $admin = $stmt->fetch(PDO::FETCH_ASSOC);
 
     $admin_name = $admin['first_name'] ?? 'Kasir';
-    $admin_role = ucfirst($admin['role'] ?? 'Kasir'); // Capitalize role
-    $admin_photo = $admin['photo'] ?? 'default.png';  // Default photo
+    $admin_role = ucfirst($admin['role'] ?? 'Kasir'); 
+    $admin_photo = $admin['photo'] ?? 'default.png'; 
 
    //  Data Analytic
       // Query untuk Pendapatan Hari Ini
@@ -47,11 +47,6 @@ try {
       $stmt_members = $pdo->prepare("SELECT COUNT(*) AS total_members FROM member WHERE status = 'member'");
       $stmt_members->execute();
       $total_members = $stmt_members->fetch(PDO::FETCH_ASSOC)['total_members'] ?? 0;
-
-      // Query untuk Belum Lunas
-      // $stmt_pending = $pdo->prepare("SELECT COUNT(*) AS pending FROM transactions WHERE status = 'Belum Lunas'");
-      // $stmt_pending->execute();
-      // $total_pending = $stmt_pending->fetch(PDO::FETCH_ASSOC)['pending'] ?? 0;
 
 
 } catch (PDOException $e) {
@@ -79,7 +74,7 @@ try {
         @media (min-width: 768px) {
             .custom-grid {
                 display: grid;
-                grid-template-columns: 1fr 3fr 1fr; /* Kolom tengah lebih lebar */
+                grid-template-columns: 1fr 4fr ; /* Kolom tengah lebih lebar */
                 gap: 20px; /* Memberikan jarak antara kolom */
             }
         }
@@ -156,43 +151,8 @@ try {
          <h2 class="text-lg font-semibold">Total Transaksi Hari Ini</h2>
          <p class="text-3xl font-bold"><?php echo htmlspecialchars($total_transactions); ?></p>
       </div>
-   </div>
 
-
-      <!-- Tengah: Form Input Kasir -->
-      <div class="bg-white p-6 rounded-lg shadow-md">
-         <div class="mb-6 flex justify-between items-center">
-            <h2 class="text-3xl font-semibold mt-1">Kasir</h2>
-            <button type="submit" class="w-48 bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 flex items-center justify-center space-x-2">
-               <i class="bx bx-user-plus"></i> <!-- Ikon Tambah Member -->
-               <span>Tambah Member</span>
-            </button>
-
-         </div>
-         <form action="process_transaction.php" method="POST">
-               <label for="member" class="block text-sm font-medium text-gray-700">Member:</label>
-               <input type="text" name="member" id="member" class="w-full p-2 border rounded-lg mb-4" required>
-               
-               <label for="service" class="block text-sm font-medium text-gray-700">Layanan:</label>
-               <input type="text" name="service" id="service" class="w-full p-2 border rounded-lg mb-4" required>
-
-               <label for="amount" class="block text-sm font-medium text-gray-700">Jumlah:</label>
-               <input type="number" name="amount" id="amount" class="w-full p-2 border rounded-lg mb-4" required>
-               <div class="flex justify-end">
-                  <div>
-                     <button type="submit" class=" w-36 bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">
-                        Submit
-                     </button>
-                     <button type="submit" class=" w-36 bg-green-600 text-white p-2 rounded-lg hover:bg-green-700">
-                        Bayar
-                     </button>
-                  </div>
-               </div>
-         </form>
-      </div>
-
-      <!-- Kanan: Card Total Member & Belum Lunas -->
-      <div class="space-y-4">
+            <div class="space-y-4">
       <!-- Card Total Member -->
       <div class="bg-yellow-500 text-white p-6 rounded-lg shadow-md relative">
          <i class="bx bx-group text-3xl absolute top-3 right-3"></i> <!-- Ikon di pojok kanan atas -->
@@ -207,7 +167,141 @@ try {
          <p class="text-3xl font-bold">0</p>
       </div>
    </div>
-      <!-- Kanan: Card Total Member & Belum Lunas -->
+   </div>
+
+
+      <!-- Tengah: Form Input Kasir -->
+      <div class="bg-white p-6 rounded-lg shadow-md">
+         <div class="mb-6 flex justify-between items-center">
+            <h2 class="text-3xl font-semibold mt-1">Kasir</h2>
+            <button type="submit" class="w-52 bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700 flex items-center justify-center space-x-2">
+               <i class="bx bx-user-plus"></i> <!-- Ikon Tambah Member -->
+               <span>Tambah Pelanggan</span>
+            </button>
+
+         </div>
+         <form action="process_transaction.php" method="POST">
+            <div class="space-y-4">
+               <!-- Dropdown Pelanggan -->
+               <div class="w-full">
+                  <label for="service" class="block text-sm font-medium text-gray-700">Layanan</label>
+                  <select id="service" name="service" class="w-full border rounded p-2 text-black">
+                     <option class="text-gray-500" value="">Pilih Layanan</option>
+                     <?php
+                     $conn = new mysqli('localhost', 'root', '', 'db_laundry');
+
+                     if ($conn->connect_error) {
+                           die("Koneksi gagal: " . $conn->connect_error);
+                     }
+
+                     $sql = "SELECT id, first_name, last_name, status FROM member";
+                     $result = $conn->query($sql);
+
+                     if ($result->num_rows > 0) {
+                           while ($row = $result->fetch_assoc()) {
+                              $statusText = ($row['status'] === 'non_member') ? 'Non Member' : 'Member';
+                              echo "<option class='text-black' value='" . htmlspecialchars($row['id']) . "'>"
+                                 . htmlspecialchars($row['first_name']) . " "
+                                 . htmlspecialchars($row['last_name']) . " - " . $statusText
+                                 . "</option>";
+                           }
+                     } else {
+                           echo "<option class='text-gray-500' value=''>Tidak ada pelanggan. Daftarkan pelanggan dahulu</option>";
+                     }
+                     $conn->close();
+                     ?>
+                  </select>
+               </div>
+
+                  <!-- Dropdown Pelanggan End -->
+                  <!-- Dropdown Layanan -->
+               <div class="flex space-x-4 col 2">
+                  <div class="w-full">
+                     <label for="service" class="block text-sm font-medium text-gray-700">Layanan</label>
+                     <select id="service" name="service" class="w-full border rounded p-2 text-black">
+                        <option class="text-gray-500" value="">Pilih Layanan</option>
+                        <?php
+                        // Koneksi ke database
+                        $conn = new mysqli('localhost', 'root', '', 'db_laundry');
+
+                        // Cek koneksi
+                        if ($conn->connect_error) {
+                              die("Koneksi gagal: " . $conn->connect_error);
+                        }
+
+                        // Query untuk mengambil layanan dengan status aktif
+                        $sql = "SELECT * FROM services WHERE status = '1'";
+                        $result = $conn->query($sql);
+
+                        // Loop untuk menampilkan opsi dalam dropdown
+                        if ($result->num_rows > 0) {
+                              while ($row = $result->fetch_assoc()) {
+                                 echo "<option 
+                                          class='text-black' 
+                                          value='" 
+                                             . htmlspecialchars($row['id']) . "'>" 
+                                             . htmlspecialchars($row['service_name']) . " -  Rp"
+                                             . htmlspecialchars($row['price_per_unit'])
+                                          . "</option>";
+                              }
+                        } else {
+                              echo "<option class='text-gray-500' value=''>Tidak ada layanan aktif</option>";
+                        }
+
+                        // Tutup koneksi
+                        $conn->close();
+                        ?>
+                     </select>
+                  </div>
+                  <!-- Dropdown Layanan End -->
+                  <div class="w-full">
+                     <label for="quantity" class="block text-sm font-medium text-gray-700">Jumlah:</label>
+                     <input type="number" name="quantity" id="quantity" class="w-full p-2 border rounded-lg " required>
+                  </div>
+               </div>
+
+               <div class="flex space-x-4 col-2">
+                  <div class="w-full mb-5">
+                     <label for="date" class="block text-sm font-medium text-gray-700">Tanggal Masuk:</label>
+                     <input type="date" name="date" id="date" class="w-full p-2 border rounded-lg " required> 
+                  </div>
+                  <div class="w-full mb-5">
+                     <label for="date" class="block text-sm font-medium text-gray-700">Estimasi Selesai:</label>
+                     <input type="date" name="date" id="date" class="w-full p-2 border rounded-lg " required> 
+                  </div>
+               </div>
+               <div class="w-full mb-5 ">
+                  <label for="note" class="block text-sm font-medium text-gray-700">Catatan (opsional)</label>
+                  <textarea name="note" id="note" class="w-full p-2 border rounded-lg "></textarea>
+               </div>
+               
+               <div class="flex justify-end">
+                  <div class="w-1/2 mb-5">
+                     <label for="amount" class="block text-xl font-semibold text-gray-700">Jumlah Total:</label>
+                     <input type="number" name="amount" id="amount" class="w-full p-2 border rounded-lg" disabled required>
+                  </div>
+               </div>
+            </div>
+               
+            <div class="flex justify-between">
+               <div>
+                     <a href="dashboard.php" class="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg text-center flex items-center space-x-2">
+                        <i class="bx bx-x"></i>
+                        <span>Batal</span>
+                    </a>
+               </div>
+               <div>
+                  <button type="submit" class=" w-36 bg-blue-600 text-white p-2 rounded-lg hover:bg-blue-700">
+                     Submit
+                  </button>
+                  <button type="submit" class=" w-36 bg-green-600 text-white p-2 rounded-lg hover:bg-green-700">
+                     Bayar
+                  </button>
+               </div>
+            </div>
+
+         </form>
+      </div>
 
 </div>
 
