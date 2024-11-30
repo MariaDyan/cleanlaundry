@@ -250,13 +250,13 @@ try {
                   <tr class="border-t">
                      <td class="py-2 px-4 flex justify-center items-center">
                         <!-- Ikon Edit -->
-                        <a href="edit_pelanggan?id=<?php echo $member['id']; ?>" class="text-blue-600 hover:text-blue-800">
-                           <i class="bx bx-edit"></i> 
-                        </a> 
+                        <a href="#" onclick="openEditModal(<?php echo htmlspecialchars(json_encode($member)); ?>)" class="text-blue-600 hover:text-blue-800">
+                            <i class="bx bx-edit"></i>
+                        </a>
                         <!-- Spasi antara ikon -->
                         <span class="mx-2"></span>
                         <!-- Ikon Hapus -->
-                        <a href="delete_pelanggan?id=<?php echo $member['id']; ?>" class="text-red-600 hover:text-red-800">
+                        <a href="../../function/kasir/pelanggan/delete-pelanggan.php?id=<?php echo $member['id']; ?>" class="text-red-600 hover:text-red-800">
                            <i class="bx bx-trash"></i> 
                         </a>
                      </td>
@@ -265,13 +265,13 @@ try {
                      <td class="py-2 px-4"><?php echo htmlspecialchars($member['email']); ?></td>
                      <td class="py-2 px-4"><?php echo htmlspecialchars($member['phone']); ?></td>
                      <td class="py-2 px-4"><?php echo htmlspecialchars($member['address']); ?></td>
-                     <td class="py-2 px-4 capitalize">
+                     <td class="py-2 px-4 capitalize justify-center">
                         <?php 
                             $status = htmlspecialchars($member['status']);
                             if ($status === 'non_member') {
-                                echo 'Non Member';
+                                echo '<div class="bg-red-600 text-white py-1 px-4 w-36 text-center rounded-xl">Non Member</div>';
                             } else {
-                                echo $status;
+                                echo '<div class="bg-green-400 text-white py-1 px-4 w-36 text-center rounded-xl">Member</div>';
                             }
                         ?>
                     </td>
@@ -301,5 +301,78 @@ try {
 </div>
 <!-- Main Content End -->
 
+
+<!-- Modal Edit Peanggan -->
+<div id="modal-edit-pelanggan" class="fixed inset-0 hidden bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-lg p-6 w-8/12">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-2xl font-semibold text-gray-800">Edit Pelanggan</h2>
+            <button onclick="toggleModal('modal-edit-pelanggan')" class="text-gray-400 hover:text-gray-600">
+                <i class="bx bx-x text-2xl"></i>
+            </button>
+        </div>
+        <form method="POST" action="../../function/kasir/pelanggan/update-pelanggan.php">
+            <input type="hidden" name="id" id="edit-id">
+            <div class="flex cols-2 gap-4">
+                <div class="mb-4 w-full">
+                    <label for="edit-first_name" class="block text-sm font-medium text-gray-700">Nama Depan</label>
+                    <input type="text" name="first_name" id="edit-first_name" required class="w-full p-2 border rounded-lg">
+                </div>
+                <div class="mb-4 w-full">
+                    <label for="edit-last_name" class="block text-sm font-medium text-gray-700">Nama Belakang</label>
+                    <input type="text" name="last_name" id="edit-last_name" required class="w-full p-2 border rounded-lg">
+                </div>
+            </div>
+            <div class="mb-4">
+                <label for="edit-phone" class="block text-sm font-medium text-gray-700">Nomor Telepon</label>
+                <input type="text" name="phone" id="edit-phone" required class="w-full p-2 border rounded-lg">
+            </div>
+            <div class="mb-4">
+                <label for="edit-email" class="block text-sm font-medium text-gray-700">Email</label>
+                <input type="email" name="email" id="edit-email" required class="w-full p-2 border rounded-lg">
+            </div>
+            <div class="mb-4">
+                <label for="edit-address" class="block text-sm font-medium text-gray-700">Alamat</label>
+                <textarea name="address" id="edit-address" rows="4" required class="w-full p-2 border rounded-lg"></textarea>
+            </div>
+            <div class="mb-4">
+                <label for="edit-status" class="block text-sm font-medium text-gray-700">Status</label>
+                <select name="status" id="edit-status" required class="w-full p-2 border rounded-lg">
+                    <option value="member">Member</option>
+                    <option value="non_member">Non Member</option>
+                </select>
+            </div>
+            <div class="flex justify-end space-x-4">
+                <button type="button" onclick="toggleModal('modal-edit-pelanggan')" class="px-4 py-2 bg-red-600 rounded-lg text-white hover:bg-red-700">
+                    Batal
+                </button>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    Simpan
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- End Modal Edit Pelanggan -->
+<!-- End Modal Tambah Pelanggan -->
 </body>
+
+<script>
+function toggleModal(modalID) {
+    const modal = document.getElementById(modalID);
+    modal.classList.toggle('hidden');
+}
+
+function openEditModal(member) {
+    document.getElementById('edit-id').value = member.id;
+    document.getElementById('edit-first_name').value = member.first_name;
+    document.getElementById('edit-last_name').value = member.last_name;
+    document.getElementById('edit-phone').value = member.phone;
+    document.getElementById('edit-email').value = member.email;
+    document.getElementById('edit-address').value = member.address;
+    document.getElementById('edit-status').value = member.status;
+    toggleModal('modal-edit-pelanggan');
+}
+</script>
+
 </html>

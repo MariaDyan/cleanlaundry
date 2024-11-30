@@ -102,6 +102,18 @@
     }
     ?>
 
+    <?php
+    session_start();
+    if (isset($_SESSION['toast_message'])) {
+        echo "<script>
+            window.onload = function() {
+                showToast('" . $_SESSION['toast_message'] . "');
+            }
+        </script>";
+        unset($_SESSION['toast_message']); // Hapus pesan setelah ditampilkan
+    }
+    ?>
+
 
     <!DOCTYPE html>
     <html lang="en">
@@ -125,10 +137,30 @@
                     gap: 20px; /* Memberikan jarak antara kolom */
                 }
             }
+
+            #toast {
+                visibility: hidden; /* Awalnya tersembunyi */
+                min-width: 250px;
+                background-color: #28a745; /* Warna hijau */
+                color: white; /* Teks putih */
+                text-align: center;
+                border-radius: 5px; /* Sudut membulat */
+                padding: 16px;
+                position: fixed; /* Tetap di satu posisi */
+                z-index: 1000; /* Agar tampil di atas elemen lain */
+                bottom: 20px; /* Jarak dari bawah */
+                right: 20px; /* Jarak dari kanan */
+                font-size: 17px; /* Ukuran font */
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+                }
         </style>
     </head>
 
     <body class="bg-gray-100">
+
+    <!-- TOAST -->
+    <div id="toast"></div>
+    <!-- END TOAST -->
 
     <!-- Navigation Bar Start -->
     <nav class="flex items-center justify-between bg-white fixed top-0 left-0 right-0 shadow-md z-10">
@@ -263,30 +295,32 @@
                     <tr class="border-t">
                         <td class="py-2 px-4 flex justify-center items-center">
                             <!-- Ikon Edit -->
-                            <a href="edit_pelanggan?id=<?php echo $services['id']; ?>" class="text-blue-600 hover:text-blue-800">
-                            <i class="bx bx-edit"></i> 
-                            </a> 
+                            <a href="javascript:void(0);" onclick="openEditModal(<?php echo htmlspecialchars(json_encode($services)); ?>)" class="text-blue-600 hover:text-blue-800">
+                                <i class="bx bx-edit"></i>
+                            </a>
                             <!-- Spasi antara ikon -->
                             <span class="mx-2"></span>
                             <!-- Ikon Hapus -->
-                            <a href="../../function/kasir/layanan/delete-layanan.php?id=<?php echo $services['id']; ?>" class="text-red-600 hover:text-red-800">
-                            <i class="bx bx-trash"></i> 
+                            <a href="javascript:void(0);" onclick="confirmDelete('<?php echo $services['id']; ?>', '<?php echo htmlspecialchars($services['service_name']); ?>')" class="text-red-600 hover:text-red-800">
+                                <i class="bx bx-trash"></i>
                             </a>
+
                         </td>
 
                         <td class="py-2 px-4"><?php echo htmlspecialchars($services['service_name']); ?></td>
-                        <td class="py-2 px-4 text-right">Rp.<?php echo htmlspecialchars($services['price_per_unit']); ?></td>
+                        <td class="py-2 px-4 text-right"><?php echo 'Rp ' . number_format(htmlspecialchars($services['price_per_unit']), 0, ',', '.'); ?></td>
                         <td class="py-2 px-4"><?php echo htmlspecialchars($services['description']); ?></td>
-                        <td class="py-2 px-4 capitalize">
+                        <td class="py-2 px-4">
                             <?php 
                                 $status = htmlspecialchars($services['status']);
                                 if ($status === '1') {
-                                    echo 'Aktif';
+                                    echo '<div class="bg-green-400 text-white py-1 px-4 w-28 text-center rounded-xl">Aktif</div>';
                                 } else {
-                                    echo 'Non Aktif';
+                                    echo '<div class="bg-red-500 text-white py-1 px-4 w-28 text-center rounded-xl">Non Aktif</div>';
                                 }
                             ?>
                         </td>
+
                     </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -357,12 +391,77 @@
             </form>
         </div>
     </div>
+    <!-- End Modal ADD -->
+
+    <!-- Modal Edit -->
+    <div id="modal-edit-service" class="fixed inset-0 hidden bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-8/12">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-2xl font-semibold text-gray-800">Edit Layanan</h2>
+                <button onclick="toggleModal('modal-edit-service')" class="text-gray-400 hover:text-gray-600">
+                    <i class="bx bx-x text-2xl"></i>
+                </button>
+            </div>
+            <form id="editServiceForm" method="POST" action="../../function/kasir/layanan/update-layanan.php">
+                <input type="hidden" name="id" id="edit_id">
+                <div class="mb-4">
+                    <label for="edit_service_name" class="block text-sm font-medium text-gray-700">Nama Layanan</label>
+                    <input type="text" name="service_name" id="edit_service_name" required
+                        class="w-full p-2 border rounded-lg" placeholder="Masukkan Nama Layanan">
+                </div>
+                <div class="mb-4">
+                    <label for="edit_price_per_unit" class="block text-sm font-medium text-gray-700">Harga Per Kilo</label>
+                    <input type="number" name="price_per_unit" id="edit_price_per_unit" required
+                        class="w-full p-2 border rounded-lg" placeholder="Masukkan Harga">
+                </div>
+                <div class="mb-4">
+                    <label for="edit_description" class="block text-sm font-medium text-gray-700">Deskripsi</label>
+                    <textarea name="description" id="edit_description" rows="4" required
+                        class="w-full p-2 border rounded-lg" placeholder="Masukkan Deskripsi Layanan"></textarea>
+                </div>
+                <div class="mb-4">
+                    <label for="edit_status" class="block text-sm font-medium text-gray-700">Status</label>
+                    <select name="status" id="edit_status" required class="w-full p-2 border rounded-lg">
+                        <option value="1">Aktif</option>
+                        <option value="0">Non Aktif</option>
+                    </select>
+                </div>
+                <div class="flex justify-end space-x-4">
+                    <button type="button" onclick="toggleModal('modal-edit-service')" class="px-4 py-2 bg-red-600 rounded-lg hover:bg-red-700">
+                        Batal
+                    </button>
+                    <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        Simpan Perubahan
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- End Modal Edit -->
+
+    <!-- Modal Dialog Box Hapus -->
+    <div id="modal-delete-confirm" class="fixed inset-0 hidden bg-gray-800 bg-opacity-75 flex items-center justify-center z-50">
+        <div class="bg-white rounded-lg shadow-lg p-6 w-1/3">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Konfirmasi Penghapusan</h2>
+            <p id="delete-message" class="mb-6"></p>
+            <div class="flex justify-end space-x-4">
+                <button onclick="closeDeleteModal()" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
+                    Batal
+                </button>
+                <a id="delete-confirm-button" href="#" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    Hapus
+                </a>
+            </div>
+        </div>
+    </div>
+    <!-- End Modal Dialog Box Hapus -->
+
 
     </body>
     </html>
 
     <script>
-        // Script Open Close Modal
+    // Script Open Close Modal
         function toggleModal(modalID) {
             const modal = document.getElementById(modalID);
             if (modal.classList.contains('hidden')) {
@@ -371,6 +470,38 @@
                 modal.classList.add('hidden');
             }
         }
-        // Script Open Close Modal
 
+        function openEditModal(service) {
+            document.getElementById('edit_id').value = service.id;
+            document.getElementById('edit_service_name').value = service.service_name;
+            document.getElementById('edit_price_per_unit').value = service.price_per_unit;
+            document.getElementById('edit_description').value = service.description;
+            document.getElementById('edit_status').value = service.status;
+            toggleModal('modal-edit-service');
+        }
+    // Script Open Close Modal
+
+    // TOAST
+        function showToast(message) {
+            var toast = document.getElementById("toast");
+            toast.innerHTML = message;
+            toast.style.visibility = "visible";
+            setTimeout(function() {
+                toast.style.visibility = "hidden";
+            }, 3000); // Toast akan menghilang setelah 3 detik
+        }
+        // KOnfirmasi HAPUS
+        function confirmDelete(id, name) {
+            // Set pesan konfirmasi
+            document.getElementById('delete-message').innerText = `Apakah Anda yakin ingin menghapus "${name}"?`;
+            // Set tautan pada tombol konfirmasi hapus
+            document.getElementById('delete-confirm-button').href = `../../function/kasir/layanan/delete-layanan.php?id=${id}`;
+            // Tampilkan modal
+            document.getElementById('modal-delete-confirm').classList.remove('hidden');
+        }
+
+        function closeDeleteModal() {
+            // Sembunyikan modal
+            document.getElementById('modal-delete-confirm').classList.add('hidden');
+        }
     </script>
