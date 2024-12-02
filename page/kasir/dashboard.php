@@ -34,7 +34,7 @@
 
       //  Data Analytic
          // Query untuk Pendapatan Hari Ini
-         $stmt_income = $pdo->prepare("SELECT SUM(amount) AS total_income FROM transactions WHERE DATE(tanggal_transaksi) = CURDATE()");
+         $stmt_income = $pdo->prepare("SELECT SUM(total_harga) AS total_income FROM transactions WHERE status_pembayaran = 'lunas' AND DATE(tanggal_transaksi) = CURDATE()");
          $stmt_income->execute();
          $total_income = $stmt_income->fetch(PDO::FETCH_ASSOC)['total_income'] ?? 0;
 
@@ -43,6 +43,12 @@
          $stmt_transactions->execute();
          $total_transactions = $stmt_transactions->fetch(PDO::FETCH_ASSOC)['total_transactions'] ?? 0;
 
+         // Query untuk Total Transaksi Hari Ini
+         $stmt_lunas = $pdo->prepare("SELECT COUNT(*) AS belum_lunas FROM transactions WHERE status_pembayaran = 'belum_lunas'");
+         $stmt_lunas->execute();
+         $belum_lunas = $stmt_lunas->fetch(PDO::FETCH_ASSOC)['belum_lunas'] ?? 0;
+         
+         
          // Query untuk Total Member
          $stmt_members = $pdo->prepare("SELECT COUNT(*) AS total_members FROM member WHERE status = 'member'");
          $stmt_members->execute();
@@ -143,21 +149,21 @@
          <div class="bg-blue-500 text-white p-6 rounded-lg shadow-md relative">
             <i class="bx bx-transfer text-3xl absolute top-3 right-3"></i> <!-- Ikon di pojok kanan atas -->
             <h2 class="text-lg font-semibold">Transaksi Hari Ini</h2>
-            <p class="text-3xl font-bold">Rp.<?php echo htmlspecialchars($total_transactions); ?></p>
+            <p class="text-2xl font-bold"><?php echo htmlspecialchars($total_transactions); ?> <span class="text-xl">transaksi</span></p>
          </div>
 
          <!-- Card Belum Lunas -->
          <div class="bg-red-500 text-white p-6 rounded-lg shadow-md relative">
             <i class="bx bx-x-circle text-3xl absolute top-3 right-3"></i> <!-- Ikon di pojok kanan atas -->
             <h2 class="text-lg font-semibold">Belum Lunas</h2>
-            <p class="text-3xl font-bold">0</p>
+            <p class="text-2xl font-bold"><?php echo htmlspecialchars($belum_lunas); ?></p>
          </div>
          
          <!-- Card Pendapatan Hari Ini -->
          <div class="bg-green-500 text-white p-6 rounded-lg shadow-md relative">
             <i class="bx bx-money text-3xl absolute top-3 right-3"></i> <!-- Ikon di pojok kanan atas -->
             <h2 class="text-lg font-semibold">Pendapatan Hari Ini</h2>
-            <p class="text-3xl font-bold">Rp.<?php echo number_format($total_income, 0, ',', '.'); ?></p>
+            <p class="text-2xl font-bold">Rp.<?php echo number_format($total_income, 0, ',', '.'); ?></p>
          </div>
 
          <div class="space-y-4">
@@ -165,7 +171,7 @@
          <div class="bg-yellow-500 text-white p-6 rounded-lg shadow-md relative">
             <i class="bx bx-group text-3xl absolute top-3 right-3"></i> <!-- Ikon di pojok kanan atas -->
             <h2 class="text-lg font-semibold">Total Member</h2>
-            <p class="text-3xl font-bold"><?php echo htmlspecialchars($total_members); ?></p>
+            <p class="text-4xl font-bold"><?php echo htmlspecialchars($total_members); ?></p>
          </div>
 
       </div>
@@ -181,13 +187,13 @@
                </button>
 
             </div>
-            <form action="process_transaction.php" method="POST">
+            <form action="../../function/kasir/transaksi/add-transaksi.php" method="POST">
                <div class="space-y-4">
                   <!-- Dropdown Pelanggan -->
                   <div class="flex col-2 space-x-4">
                      <div class="w-full ">
-                        <label for="service" class="block text-sm font-medium text-gray-700">Pelanggan</label>
-                        <select id="member" name="member" class="w-full border rounded p-2 text-black">
+                        <label for="id_pelanggan" class="block text-sm font-medium text-gray-700">Pelanggan</label>
+                        <select id="id_pelanggan" name="id_pelanggan" class="w-full border rounded p-2 text-black" required>
                            <option class="text-black-200" value="">Pilih Pelanggan</option>
                            <?php
                            $conn = new mysqli('localhost', 'root', '', 'db_laundry');
@@ -222,8 +228,8 @@
                      <div id="services-container" >
                         <div class="flex space-x-4 col-2 service-entry mb-2">
                            <div class="w-full">
-                              <label for="service" class="block text-sm font-medium text-gray-700">Layanan</label>
-                              <select name="service[]" class="w-full border rounded p-2 text-black" id="service-select">
+                              <label for="layanan_id" class="block text-sm font-medium text-gray-700">Layanan</label>
+                              <select name="layanan_id[]" class="w-full border rounded p-2 text-black" id="service-select">
                                  <option class="text-gray-200" value="">Pilih Layanan</option>                                    <?php
                                     // Koneksi ke database
                                     $conn = new mysqli('localhost', 'root', '', 'db_laundry');
@@ -256,9 +262,9 @@
                                  </select>
                            </div>
 
-                           <div class="w-full">
+                           <div class="w-10/12">
                                  <label for="quantity" class="block text-sm font-medium text-gray-700">Jumlah</label>
-                                 <input type="number" name="quantity" class="w-full p-2 border rounded-lg" placeholder="Masukkan Jumlah" required>
+                                 <input type="decimal" name="quantity" class="w-full p-2 border rounded-lg" placeholder="Masukkan Jumlah" required>
                            </div>
 
                            <div class="flex items-end">
@@ -274,12 +280,12 @@
 
                   <div class="flex space-x-4 col-2">
                      <div class="w-full mb-1">
-                        <label for="date" class="block text-sm font-medium text-gray-700">Tanggal Masuk</label>
-                        <input type="date" name="date" id="date" class="w-full p-2 border rounded-lg " required> 
+                        <label for="tanggal_transaksi" class="block text-sm font-medium text-gray-700">Tanggal Masuk</label>
+                        <input type="date" name="tanggal_transaksi" id="date" class="w-full p-2 border rounded-lg " required> 
                      </div>
                      <div class="w-full mb-1">
-                        <label for="durasi" class="block text-sm font-medium text-gray-700">Durasi Layanan</label>
-                        <select name="durasi" id="durasi" class="w-full p-2 border rounded-lg " required>
+                        <label for="durasi_layanan" class="block text-sm font-medium text-gray-700">Durasi Layanan</label>
+                        <select name="durasi_layanan" id="durasi_layanan" class="w-full p-2 border rounded-lg " required>
                               <option class="text-gray-200" value="">Pilih Durasi</option>
                               <option value="0">Express (1 jam)</option>
                               <option value="1">Kilat (1 hari)</option>
@@ -291,8 +297,8 @@
                   <!-- Dropdown Metode Pengantaran -->
                   <div class="flex justify-end">
                      <div class="w-full">
-                        <label for="delivery_method" class="block text-sm font-medium text-gray-700">Metode Pengantaran</label>
-                        <select id="delivery_method" name="delivery_method" class="w-full border rounded p-2 text-black">
+                        <label for="metode_pengiriman" class="block text-sm font-medium text-gray-700">Metode Pengantaran</label>
+                        <select id="metode_pengiriman" name="metode_pengiriman" class="w-full border rounded p-2 text-black">
                            <option class="text-gray-200" value="">Pilih Metode Pengantaran</option>
                            <option value="pickup" class="text-black">Ambil Sendiri (Gratis)</option>
                            <option value="delivery" class="text-black">Antar (Tambahan Rp.5000)</option>
@@ -302,16 +308,16 @@
                   <!-- Dropdown Metode Pengantaran -->
 
                   <div class="w-full mb-5 ">
-                     <label for="note" class="block text-sm font-medium text-gray-700">Catatan (opsional)</label>
-                     <textarea name="note" id="note" class="w-full p-2 border rounded-lg "></textarea>
+                     <label for="catatan" class="block text-sm font-medium text-gray-700">Catatan (opsional)</label>
+                     <textarea name="catatan" id="catatan" class="w-full p-2 border rounded-lg "></textarea>
                   </div>
                   
                   <div class="flex justify-end">
                      <div class="w-1/2 mb-5">
-                        <label for="service_price" class="block text-2xl font-bold text-gray-700">Total</label>
+                        <label for="total_harga" class="block text-2xl font-bold text-gray-700">Total</label>
                         <div class="flex items-center space-x-2">
                               <span class="text-xl font-bold text-gray-700">Rp.</span>
-                              <input type="text" name="service_price" id="service_price" class="w-full p-2 border rounded-lg text-xl" value="" disabled oninput="formatPrice(event)" />
+                              <input type="text" name="total_harga" id="total_harga" class="w-full p-2 border rounded-lg text-xl" value="" disabled oninput="formatPrice(event)" />
                         </div>
                      </div>
                   </div>
@@ -327,7 +333,8 @@
                   </div>
                   <div>
                      <button type="submit" class=" w-36 bg-green-600 text-white p-2 rounded-lg hover:bg-green-700">
-                        Bayar
+                        <i class="bx bx-money"></i>
+                        <span class="text-center"> Bayar</span>
                      </button>
                   </div>
                </div>
@@ -402,31 +409,20 @@
    </body>
 
 <script>
+function toggleModal(modalID) {
+    const modal = document.getElementById(modalID);
+    if (modal.classList.contains('hidden')) {
+        modal.classList.remove('hidden'); // Buka modal
+    } else {
+        modal.classList.add('hidden'); // Tutup modal
+    }
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const container = document.getElementById('services-container');
-    const deliveryMethodSelect = document.getElementById('delivery_method');
-    const totalAmountInput = document.getElementById('service_price');
-
-    // Fungsi untuk memperbarui status tombol hapus
-    const updateRemoveButtons = () => {
-        const serviceEntries = container.querySelectorAll('.service-entry');
-        serviceEntries.forEach((entry) => {
-            const removeButton = entry.querySelector('.remove-service');
-            removeButton.disabled = serviceEntries.length === 1; // Disable jika hanya satu layanan
-        });
-    };
-
-    // Fungsi untuk memformat harga dengan pemisah ribuan
-    function formatPrice(event) {
-        let input = event.target;
-        let value = input.value.replace(/[^0-9]/g, ''); // Hapus semua karakter non-numerik
-
-        // Format angka dengan pemisah ribuan (titik)
-        let formattedValue = value.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-
-        // Set nilai yang sudah diformat kembali ke input
-        input.value = formattedValue;
-    }
+    const deliveryMethodSelect = document.getElementById('metode_pengiriman');
+    const totalAmountInput = document.getElementById('total_harga');
+    const durationSelect = document.getElementById('durasi_layanan');
 
     // Fungsi untuk menghitung total harga
     function calculateTotal() {
@@ -435,10 +431,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const serviceEntries = container.querySelectorAll('.service-entry');
         serviceEntries.forEach(entry => {
             const quantityInput = entry.querySelector('input[name="quantity"]');
-            const serviceSelect = entry.querySelector('select[name="service[]"]');
+            const serviceSelect = entry.querySelector('select[name="layanan_id[]"]');
             const pricePerUnit = parseInt(serviceSelect.options[serviceSelect.selectedIndex].textContent.split('- Rp')[1].replace(/\./g, '')) || 0;
             const quantity = parseFloat(quantityInput.value) || 0;
 
+            // Tambahkan harga layanan * jumlah
             total += pricePerUnit * quantity;
         });
 
@@ -446,6 +443,20 @@ document.addEventListener('DOMContentLoaded', () => {
         const deliveryFee = deliveryMethodSelect.value === 'delivery' ? 5000 : 0;
         total += deliveryFee;
 
+        // Tambahkan biaya durasi
+        let durationFee = 0;
+         if (durationSelect.value === "0") {
+            durationFee = 5000;
+         } else if (durationSelect.value === "1") {
+            durationFee = 2500;
+         } else if (durationSelect.value === "2") {
+            durationFee = 0;
+         }
+
+         total += durationFee;
+
+
+        // Update total harga
         totalAmountInput.value = total;
     }
 
@@ -460,8 +471,6 @@ document.addEventListener('DOMContentLoaded', () => {
             newEntry.querySelectorAll('select, input').forEach((input) => input.value = '');
             container.appendChild(newEntry);
 
-            // Perbarui tombol hapus
-            updateRemoveButtons();
             calculateTotal();
         }
 
@@ -469,9 +478,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.closest('.remove-service')) {
             const serviceEntry = e.target.closest('.service-entry');
             serviceEntry.remove();
-
-            // Perbarui tombol hapus
-            updateRemoveButtons();
             calculateTotal();
         }
     });
@@ -481,9 +487,14 @@ document.addEventListener('DOMContentLoaded', () => {
         calculateTotal();
     });
 
+    // Event listener untuk perubahan durasi
+    durationSelect.addEventListener('change', () => {
+        calculateTotal();
+    });
+
     // Event listener untuk perubahan jumlah (quantity)
     container.addEventListener('change', (e) => {
-        if (e.target.closest('input[name="quantity"]') || e.target.closest('select[name="service[]"]')) {
+        if (e.target.closest('input[name="quantity"]') || e.target.closest('select[name="layanan_id[]"]')) {
             calculateTotal();
         }
     });
@@ -495,14 +506,6 @@ document.addEventListener('DOMContentLoaded', () => {
             calculateTotal(); // Hitung total ketika Enter ditekan
         }
     });
-
-    // Menangani input harga yang diformat
-    document.querySelectorAll('.price-input').forEach(input => {
-        input.addEventListener('input', formatPrice);
-    });
-
-    // Atur tombol hapus saat halaman dimuat
-    updateRemoveButtons();
 
     // Hitung total saat halaman dimuat pertama kali
     calculateTotal();
