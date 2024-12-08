@@ -64,11 +64,11 @@
 
    <!DOCTYPE html>
    <html lang="en">
-   <head>
+      <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Kasir Laundry</title>
-      <link href="https://cdn.jsdelivr.net/npm/tailwindcss@latest/dist/tailwind.min.css" rel="stylesheet">
+      <script src="https://cdn.tailwindcss.com"></script>
       <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
       <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
       <style>
@@ -156,14 +156,14 @@
          <div class="bg-red-500 text-white p-6 rounded-lg shadow-md relative">
             <i class="bx bx-x-circle text-3xl absolute top-3 right-3"></i> <!-- Ikon di pojok kanan atas -->
             <h2 class="text-lg font-semibold">Belum Lunas</h2>
-            <p class="text-2xl font-bold"><?php echo htmlspecialchars($belum_lunas); ?></p>
+            <p class="text-2xl font-bold"><?php echo htmlspecialchars($belum_lunas); ?> <span class="text-xl">transaksi</span></p>
          </div>
          
          <!-- Card Pendapatan Hari Ini -->
          <div class="bg-green-500 text-white p-6 rounded-lg shadow-md relative">
             <i class="bx bx-money text-3xl absolute top-3 right-3"></i> <!-- Ikon di pojok kanan atas -->
             <h2 class="text-lg font-semibold">Pendapatan Hari Ini</h2>
-            <p class="text-2xl font-bold">Rp.<?php echo number_format($total_income, 0, ',', '.'); ?></p>
+            <p class="text-2xl font-bold"><span class="text-xl">Rp</span><?php echo number_format($total_income, 0, ',', '.'); ?></p>
          </div>
 
          <div class="space-y-4">
@@ -171,7 +171,7 @@
          <div class="bg-yellow-500 text-white p-6 rounded-lg shadow-md relative">
             <i class="bx bx-group text-3xl absolute top-3 right-3"></i> <!-- Ikon di pojok kanan atas -->
             <h2 class="text-lg font-semibold">Total Member</h2>
-            <p class="text-4xl font-bold"><?php echo htmlspecialchars($total_members); ?></p>
+            <p class="text-2xl font-bold"><?php echo htmlspecialchars($total_members); ?> <span class="text-xl">orang</span></p>
          </div>
 
       </div>
